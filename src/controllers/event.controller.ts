@@ -23,9 +23,14 @@ export function createEventController(req: Request, res: Response): void {
     errors: [],
   });
 }
-export function getEventByIdController(req: Request, res: Response): void {
-  const event = getEventById(req.params.id);
+interface EventParams {
+  id: string;
+}
 
+export function getEventByIdController(
+  req: Request<EventParams>,
+  res: Response,
+): void {
   if (!event) {
     res.status(404).json({
       ok: false,
