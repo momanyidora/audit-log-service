@@ -11,5 +11,5 @@ export interface AuditEvent {
 
 export interface StoredEvent extends AuditEvent{
   id: string;
-  timestamp: string;
+  timestamp: Date;
 }

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "ts-node-dev --respawn src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
@@ -14,11 +16,14 @@
   "type": "commonjs",
   "dependencies": {
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.0.1",
+    "drizzle-kit": "^0.31.10",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
   }

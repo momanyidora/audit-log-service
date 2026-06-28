@@ -1,13 +1,15 @@
 import crypto from "crypto";
 import { AuditEvent, StoredEvent } from "../types/event.types";
-import { saveEvent } from "../repositories/in-memory-event.repository";
+import {
+  saveEvent,
+  findEventById,
+} from "../repositories/event.repository";
 
-import { findEventById } from "../repositories/in-memory-event.repository";
-
-export function createEvent(event: AuditEvent): StoredEvent {
+export async function createEvent(event: AuditEvent) {
   const newEvent: StoredEvent = {
     id: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(),
+
     actor_id: event.actor_id,
     action: event.action,
     resource_type: event.resource_type,
@@ -17,8 +19,10 @@ export function createEvent(event: AuditEvent): StoredEvent {
     ip_address: event.ip_address,
     user_agent: event.user_agent,
   };
-  return saveEvent(newEvent);
+
+  return await saveEvent(newEvent);
 }
-export function getEventById(id: string) {
-  return findEventById(id);
+
+export async function getEventById(id: string) {
+  return await findEventById(id);
 }

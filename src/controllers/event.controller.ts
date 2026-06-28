@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import { validateCreateEvent } from "../validators/create-event.validator";
 import { createEvent } from "../services/event.service";
 import { getEventById } from "../services/event.service";
-export function createEventController(req: Request, res: Response): void {
+export async function createEventController(
+  req: Request,
+  res: Response
+): Promise<void> {
   const errors = validateCreateEvent(req.body);
 
   if (errors.length > 0) {
@@ -15,7 +18,7 @@ export function createEventController(req: Request, res: Response): void {
     return;
   }
 
-  const event = createEvent(req.body);
+  const event = await createEvent(req.body);
 
   res.status(201).json({
     ok: true,
@@ -26,11 +29,14 @@ export function createEventController(req: Request, res: Response): void {
 interface EventParams {
   id: string;
 }
-
-export function getEventByIdController(
+export async function getEventByIdController(
   req: Request<EventParams>,
   res: Response,
-): void {
+): Promise<void> {
+  // console.log("ID:", JSON.stringify(req.params.id));
+
+  const event = await getEventById(req.params.id);
+
   if (!event) {
     res.status(404).json({
       ok: false,
@@ -53,3 +59,4 @@ export function getEventByIdController(
     errors: [],
   });
 }
+
