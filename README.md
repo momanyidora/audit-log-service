@@ -1,12 +1,16 @@
-##Immutable Audit Log Service
+#Immutable Audit Log Service
 
-#What This Service Does
+##What This Service Does
+
 This is a REST API for recording audit events basically a permanent paper trail for sensitive actions in a system. Someone deletes a record, changes a price, updates another user's permissions;this service writes down who did it, what they did, what it affected, and when.
+
 The main rule the whole thing is built around: once an event is written, it cannot be changed or removed. No edit endpoint, no delete endpoint, nothing. If you want to know what happened in your system last week, this is supposed to be a source you can actually trust.
+
 On top of that, every event gets signed with HMAC when it's stored. So even if someone got into the database directly and edited a row by hand, there's a way to detect that the record doesn't match its signature anymore.
 
 ---
-##Setup & Configuration
+##Setup & Configuration.
+
 You will need:
 -Node.js
 -PostgreSQL running somewhere (local is fine)
@@ -15,38 +19,48 @@ You will need:
 ---
 
 ##clone it and install
--git clone <repository-url>
--cd immutable-audit-log-service
--npm install
+```bash
+ git clone <repository-url>
+ cd immutable-audit-log-service
+ npm install.
+```
 
-Then make a .env file in the root with:
+##Then make a .env file in the root with:
         -PORT=3000
         -DATABASE_URL=postgres://postgres:pasword@localhost:5432/event-log-db
         -HMAC_SECRET=secret-key
 
-Then generate and run the migration:
+---
+##Then generate and run the migration:
+```bash
     npm run db:generate
     npm run db:migrate
+ ```
 
 ##Running the server
+```bash
   npm run dev
+  ```
   Runs on http://localhost:3000 by default (or whatever port you set in .env).
 
+---
   ##Running Tests
     npm run test:run
     This runs the full Vitest suite; 35 tests across validation, creating events, querying, pagination, bulk inserts, signature verification, and write-only enforcement. All of it should pass on a clean clone, assuming your .env is set up and the database is reachable.
 
 ---
 
-##|Field         |Required  |  What it's for        |
-|actor_id      |Yes         |who did the thing|
-|action        |Yes         |what they did, e.g. UPDATE, DELETE|
-|resource_type |Yes         |what kind of thing got touched, e.g. invoice|
-|resource_id   |Yes         |which specific one|
-|before_state  |No          |what it looked like before (JSON)|
-|ip_address    |No          |where the request came fromuser_agentNoclient info|
-|after_state   |No          |what it looked like after (JSON)|
-|user-agent    |No          |Client info|
+##|Field       |Required    |  What it's for        |.
+|--------------|----------- |-------------------------|
+|actor_id      |Yes         |who did the thing|.
+|action        |Yes         |what they did, e.g. UPDATE, DELETE|.
+|resource_type |Yes         |what kind of thing got touched, e.g. invoice|.
+|resource_id   |Yes         |which specific one|.
+|before_state  |No          |what it looked like before (JSON)|.
+|ip_address    |No          |where the request came fromuser_agentNoclient info|.
+|after_state   |No          |what it looked like after (JSON)|.
+|user-agent    |No          |Client info|.
+
 
 
 You never send id, timestamp, or signature the server sets all three itself on write. Anything you send for those gets ignored. Timestamps are stored as ISO 8601 strings (e.g. 2026-06-29T08:10:15.000Z).
@@ -71,7 +85,7 @@ Content-Type: application/json
 
 Response (201):
 
-json{
+ {
   "ok": true,
   "event": {
     "id": "f6f6b0a8-4d08-42cb-a2a3-df91f20d8b71",
@@ -89,7 +103,7 @@ json{
 
 If something's missing, you get a 400 instead, and nothing gets stored:
 
-json{
+ {
   "ok": false,
   "event": null,
   "errors": [
@@ -106,7 +120,10 @@ If more than one field is wrong, all of the errors come back together, not just 
 ##Recording a Batch (POST /events/bulk)
 
 For when you need to log a bunch of events at once. Caps out at 100 events per request anything bigger gets rejected outright, before any validation or DB work even starts.
-The important part: this is all-or-nothing. If even one event in the array is invalid, none of them get written. No partial batches sitting in the database. For an audit log that matters a lot — a half-written batch is arguably worse than no batch, because it looks complete when it isn't.
+
+The important part: this is all-or-nothing. If even one event in the array is invalid, none of them get written. No partial batches sitting in the database. 
+
+For an audit log that matters a lot — a half-written batch is arguably worse than no batch, because it looks complete when it isn't.
 
 ---
 Request:
@@ -114,48 +131,49 @@ Request:
 httpPOST /events/bulk
 Content-Type: application/json
 
-[
-  {
-    "actor_id": "user-1",
-    "action": "CREATE",
-    "resource_type": "invoice",
-    "resource_id": "INV-001"
-  },
-  {
-    "actor_id": "user-2",
-    "action": "DELETE",
-    "resource_type": "invoice",
-    "resource_id": "INV-002"
-  }
-]
+    [
+    {
+        "actor_id": "user-1",
+        "action": "CREATE",
+        "resource_type": "invoice",
+        "resource_id": "INV-001"
+    },
+    {
+        "actor_id": "user-2",
+        "action": "DELETE",
+        "resource_type": "invoice",
+        "resource_id": "INV-002"
+    }
+    ]
 
 Response (201):
 
-json{
-  "ok": true,
-  "count": 2,
-  "events": [ /* both stored events */ ],
-  "errors": []
-}
-
-If one of them is bad, you get back which index failed and why, and nothing is saved:
-
-json{
-  "ok": false,
-  "event": null,
-  "errors": [
     {
-      "index": 1,
-      "errors": [
-        {
-          "field": "action",
-          "message": "action is required.",
-          "code": "MISSING_FIELD"
-        }
-      ]
+    "ok": true,
+    "count": 2,
+    "events": [ /* both stored events */ ],
+    "errors": []
     }
-  ]
-}
+
+---
+##If one of them is bad, you get back which index failed and why, and nothing is saved:
+
+        {
+        "ok": false,
+        "event": null,
+        "errors": [
+            {
+            "index": 1,
+            "errors": [
+                {
+                "field": "action",
+                "message": "action is required.",
+                "code": "MISSING_FIELD"
+                }
+            ]
+            }
+        ]
+        }
 
 
 ---
@@ -188,8 +206,8 @@ json{
   "errors": []
 }
 
+---
 Default limit is 10 if you don't pass one. Asking for a page past the end just gives you an empty array, not an error.
-
 Signing & Verification (GET /events/:id/verify)
 
 When an event is written, the server computes an HMAC-SHA256 signature over its contents using a secret from .env (HMAC_SECRET), and stores that signature next to the event. The secret itself never touches the database.
@@ -202,6 +220,7 @@ json{
   "ok": true,
   "intact": true
 }
+---
 
 If someone went into the database and changed a field directly (not through the API the API doesn't allow that anyway), the recomputed signature won't match the stored one, and intact comes back false.
 
