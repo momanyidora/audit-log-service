@@ -158,7 +158,7 @@ Response (201):
     }
 
 ---
-## If one of them is bad, you get back which index failed and why, and nothing is saved:
+ If one of them is bad, you get back which index failed and why, and nothing is saved:
 
         {
         "ok": false,
@@ -218,7 +218,8 @@ To check whether a stored event still matches what was originally written:
 
 GET /events/:id/verify
 
-json{
+```json
+{
   "ok": true,
   "intact": true
 }
