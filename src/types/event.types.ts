@@ -8,3 +8,9 @@ export interface AuditEvent {
   ip_address?: string;
   user_agent?: string;
 }
+
+export interface StoredEvent extends AuditEvent {
+  id: string;
+  timestamp: Date;
+  signature: string;
+}
