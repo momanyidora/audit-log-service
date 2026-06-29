@@ -2,11 +2,12 @@ import crypto from "crypto";
 import { AuditEvent, StoredEvent } from "../types/event.types";
 import {
   saveEvent,
-  findEventById,
   saveBulkEvents,
+  findEventById,
+  getFilteredEvents,
 } from "../repositories/event.repository";
-import { getFilteredEvents } from "../repositories/event.repository";
 import { signEvent } from "../utils/sign-events";
+import { verifyEvent } from "../utils/verify-event";
 
 export async function createEvent(event: AuditEvent) {
   const unsignedEvent = {
@@ -23,12 +24,12 @@ export async function createEvent(event: AuditEvent) {
     user_agent: event.user_agent,
   };
 
-  const newEvent: StoredEvent = {
-    ...unsignedEvent,
-    signature: signEvent(unsignedEvent),
-  };
+  const signature = signEvent(unsignedEvent);
 
-  return await saveEvent(newEvent);
+  return await saveEvent({
+    ...unsignedEvent,
+    signature,
+  });
 }
 
 export async function getEventById(id: string) {
@@ -48,6 +49,21 @@ export async function getAllEvents(
 ) {
   return await getFilteredEvents(filters, limit, offset);
 }
+
+export async function verifyStoredEvent(id: string) {
+  const event = await findEventById(id);
+
+  if (!event) {
+    return null;
+  }
+
+  return {
+    event,
+    intact: verifyEvent(event as StoredEvent),
+  };
+}
+
+
 export async function createBulkEvents(events: AuditEvent[]) {
   const newEvents: StoredEvent[] = events.map((event) => {
     const unsignedEvent = {

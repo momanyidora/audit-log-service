@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   createEventController,
   getEventByIdController,
-  getEventsController,createBulkEventsController
+  getEventsController,createBulkEventsController,verifyEventController,
 } from "../controllers/event.controller";
 
 const router = Router();
@@ -11,6 +11,7 @@ router.post("/", createEventController);
 router.post("/bulk", createBulkEventsController);
 router.get("/", getEventsController);
 router.get("/:id", getEventByIdController);
+router.get("/:id/verify", verifyEventController);
 router.put("/:id", (_, res) => {
   res.status(405).json({
     ok: false,

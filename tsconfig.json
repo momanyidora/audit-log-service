@@ -3,12 +3,13 @@
     "target": "ES2020",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "tests", "vitest.config.ts"]
 }

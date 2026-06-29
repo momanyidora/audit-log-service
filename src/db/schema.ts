@@ -20,4 +20,5 @@ export const events = pgTable("events", {
   user_agent: text("user_agent"),
 
   timestamp: timestamp("timestamp").defaultNow().notNull(),
+  signature: text("signature").notNull(),
 });

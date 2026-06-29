@@ -4,6 +4,7 @@ import { createEvent } from "../services/event.service";
 import { getEventById } from "../services/event.service";
 import { getAllEvents } from "../services/event.service";
 import { createBulkEvents } from "../services/event.service";
+import { verifyStoredEvent } from "../services/event.service";
 
 export async function createEventController(
   req: Request,
@@ -161,6 +162,36 @@ export async function createBulkEventsController(
     ok: true,
     count: createdEvents.length,
     events: createdEvents,
+    errors: [],
+  });
+}
+
+export async function verifyEventController(
+  req: Request<EventParams>,
+  res: Response,
+): Promise<void> {
+  const result = await verifyStoredEvent(req.params.id);
+
+  if (!result) {
+    res.status(404).json({
+      ok: false,
+      event: null,
+      errors: [
+        {
+          field: "id",
+          message: "Event not found.",
+          code: "NOT_FOUND",
+        },
+      ],
+    });
+
+    return;
+  }
+
+  res.status(200).json({
+    ok: true,
+    intact: result.intact,
+    event: result.event,
     errors: [],
   });
 }
