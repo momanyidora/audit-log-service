@@ -1,0 +1,322 @@
+openapi: 3.0.3
+
+info:
+  title: Immutable Audit Log Service
+  version: 1.0.0
+  description: REST API for recording immutable audit events.
+
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Events
+
+paths:
+  /events:
+    post:
+      tags:
+        - Events
+      summary: Record a new audit event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditEvent'
+      responses:
+        '201':
+          description: Event recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  event:
+                    $ref: '#/components/schemas/StoredEvent'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: false
+                  event:
+                    nullable: true
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Events
+      summary: Get audit events
+      parameters:
+        - in: query
+          name: actor_id
+          schema:
+            type: string
+        - in: query
+          name: action
+          schema:
+            type: string
+        - in: query
+          name: resource_type
+          schema:
+            type: string
+        - in: query
+          name: resource_id
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StoredEvent'
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /events/bulk:
+    post:
+      tags:
+        - Events
+      summary: Record multiple audit events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AuditEvent'
+      responses:
+        '201':
+          description: Bulk events recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  count:
+                    type: integer
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StoredEvent'
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  event:
+                    nullable: true
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /events/{id}:
+    get:
+      tags:
+        - Events
+      summary: Get one audit event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  event:
+                    $ref: '#/components/schemas/StoredEvent'
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  event:
+                    nullable: true
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /events/{id}/verify:
+    get:
+      tags:
+        - Events
+      summary: Verify an audit event signature
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  verified:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+components:
+  schemas:
+
+    AuditEvent:
+      type: object
+
+      required:
+        - actor_id
+        - action
+        - resource_type
+        - resource_id
+
+      properties:
+        actor_id:
+          type: string
+
+        action:
+          type: string
+
+        resource_type:
+          type: string
+
+        resource_id:
+          type: string
+
+        before_state:
+          type: object
+          nullable: true
+
+        after_state:
+          type: object
+          nullable: true
+
+        ip_address:
+          type: string
+          nullable: true
+
+        user_agent:
+          type: string
+          nullable: true
+
+    StoredEvent:
+      allOf:
+        - $ref: '#/components/schemas/AuditEvent'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+
+            timestamp:
+              type: string
+              format: date-time
+
+            signature:
+              type: string
+
+    Error:
+      type: object
+
+      properties:
+        field:
+          type: string
+
+        message:
+          type: string
+
+        code:
+          type: string
